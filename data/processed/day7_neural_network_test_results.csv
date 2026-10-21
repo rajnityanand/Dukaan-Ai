@@ -1,0 +1,2 @@
+Selected_Activation,Test_Accuracy,Test_Precision_Macro,Test_Recall_Macro,Test_F1_Macro
+Sigmoid,0.5456,0.549516713330109,0.5450566048140265,0.5388674918511006
