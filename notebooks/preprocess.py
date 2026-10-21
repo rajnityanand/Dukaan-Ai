@@ -67,3 +67,68 @@ def clean_retail_data(df, imputation_values=None, is_train=True):
             df_clean[col] = df_clean[col].fillna('Unknown')
 
     return df_clean, imputation_values
+
+# preprocess.py
+from sklearn.pipeline import Pipeline
+from sklearn.compose import ColumnTransformer
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.impute import SimpleImputer
+
+def build_preprocessor(X_train):
+    """
+    Identifies feature types and builds a scikit-learn preprocessing pipeline.
+    """
+    # Identify feature types from the training set
+    numeric_features = X_train.select_dtypes(
+        include=["number", "bool"]
+    ).columns.tolist()
+
+    categorical_features = [
+        col for col in X_train.columns
+        if col not in numeric_features
+    ]
+
+    print("Numeric features:", numeric_features)
+    print("Categorical features:", categorical_features)
+
+    # Compatibility with different scikit-learn versions
+    try:
+        encoder = OneHotEncoder(
+            handle_unknown="ignore",
+            sparse_output=False
+        )
+    except TypeError:
+        encoder = OneHotEncoder(
+            handle_unknown="ignore",
+            sparse=False
+        )
+
+    numeric_pipeline = Pipeline([
+        ("imputer", SimpleImputer(strategy="median")),
+        ("scaler", StandardScaler())
+    ])
+
+    categorical_pipeline = Pipeline([
+        ("imputer", SimpleImputer(strategy="most_frequent")),
+        ("encoder", encoder)
+    ])
+
+    transformers = []
+
+    if numeric_features:
+        transformers.append(
+            ("numeric", numeric_pipeline, numeric_features)
+        )
+
+    if categorical_features:
+        transformers.append(
+            ("categorical", categorical_pipeline, categorical_features)
+        )
+
+    preprocessor = ColumnTransformer(
+        transformers=transformers,
+        remainder="drop"
+    )
+
+    print("\nPreprocessing pipeline created successfully!")
+    return preprocessor, numeric_features, categorical_features
